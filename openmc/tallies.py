@@ -81,6 +81,8 @@ class Tally(IDManagerMixin):
         Stride in memory for each filter
     num_realizations : int
         Total number of realizations
+    num_particles : int
+        Total number of particles
     with_summary : bool
         Whether or not a Summary has been linked
     sum : numpy.ndarray
@@ -118,6 +120,7 @@ class Tally(IDManagerMixin):
         self._multiply_density = True
 
         self._num_realizations = 0
+        self._num_particles = 0
         self._with_summary = False
 
         self._sum = None
@@ -288,6 +291,16 @@ class Tally(IDManagerMixin):
         cv.check_type('number of realizations', num_realizations, Integral)
         cv.check_greater_than('number of realizations', num_realizations, 0, True)
         self._num_realizations = num_realizations
+    
+    @property
+    def num_particles(self):
+        return self._num_particles
+
+    @num_particles.setter
+    def num_particles(self, num_particles):
+        cv.check_type('number of particles', num_particles, Integral)
+        cv.check_greater_than('number of particles', num_particles, 0, True)
+        self._num_particles = num_particles
 
     @property
     def with_summary(self):
@@ -366,9 +379,9 @@ class Tally(IDManagerMixin):
         if self._mean is None:
             if not self._sp_filename:
                 return None
-
-            self._mean = self.sum / self.num_realizations
-
+                
+            self._mean = self.sum / self.num_particles 
+            
             # Convert NumPy array to SciPy sparse LIL matrix
             if self.sparse:
                 self._mean = sps.lil_matrix(self._mean.flatten(),
@@ -385,11 +398,15 @@ class Tally(IDManagerMixin):
             if not self._sp_filename:
                 return None
 
-            n = self.num_realizations
-            nonzero = np.abs(self.mean) > 0
+            n = self.num_particles 
+            
             self._std_dev = np.zeros_like(self.mean)
-            self._std_dev[nonzero] = np.sqrt((self.sum_sq[nonzero]/n -
-                                              self.mean[nonzero]**2)/(n - 1))
+            self._std_dev = (1/(n-1))*(self.sum_sq - n*(self._mean)**2)
+            
+            #nonzero = np.abs(self.mean) > 0
+            #self._std_dev = np.zeros_like(self.mean)
+            #self._std_dev[nonzero] = np.sqrt((self.sum_sq[nonzero]/n -
+            #                                  self.mean[nonzero]**2)/(n - 1))
 
             # Convert NumPy array to SciPy sparse LIL matrix
             if self.sparse:
@@ -1586,6 +1603,7 @@ class Tally(IDManagerMixin):
         new_tally._derived = True
         new_tally.with_batch_statistics = True
         new_tally._num_realizations = self.num_realizations
+        new_tally._num_particles = self.num_particles
         new_tally._estimator = self.estimator
         new_tally._with_summary = self.with_summary
         new_tally._sp_filename = self._sp_filename
@@ -1657,6 +1675,8 @@ class Tally(IDManagerMixin):
             new_tally.with_summary = self_copy.with_summary
         if self_copy.num_realizations == other_copy.num_realizations:
             new_tally.num_realizations = self_copy.num_realizations
+        if self_copy.num_particles == other_copy.num_particles:
+            new_tally.num_particles = self_copy.num_particles
 
         # Add filters to the new tally
         if filter_product == 'entrywise':
@@ -2140,6 +2160,7 @@ class Tally(IDManagerMixin):
             new_tally.estimator = self.estimator
             new_tally.with_summary = self.with_summary
             new_tally.num_realizations = self.num_realizations
+            new_tally.num_particles = self.num_particles
 
             new_tally.filters = copy.deepcopy(self.filters)
             new_tally.nuclides = copy.deepcopy(self.nuclides)
@@ -2211,6 +2232,7 @@ class Tally(IDManagerMixin):
             new_tally.estimator = self.estimator
             new_tally.with_summary = self.with_summary
             new_tally.num_realizations = self.num_realizations
+            new_tally.num_particles = self.num_particles
 
             new_tally.filters = copy.deepcopy(self.filters)
             new_tally.nuclides = copy.deepcopy(self.nuclides)
@@ -2353,6 +2375,7 @@ class Tally(IDManagerMixin):
             new_tally.estimator = self.estimator
             new_tally.with_summary = self.with_summary
             new_tally.num_realizations = self.num_realizations
+            new_tally.num_particles = self.num_particles
 
             new_tally.filters = copy.deepcopy(self.filters)
             new_tally.nuclides = copy.deepcopy(self.nuclides)
@@ -2428,6 +2451,7 @@ class Tally(IDManagerMixin):
             new_tally.estimator = self.estimator
             new_tally.with_summary = self.with_summary
             new_tally.num_realizations = self.num_realizations
+            new_tally.num_particles = self.num_particles
 
             new_tally.filters = copy.deepcopy(self.filters)
             new_tally.nuclides = copy.deepcopy(self.nuclides)
@@ -2733,6 +2757,7 @@ class Tally(IDManagerMixin):
         tally_sum._derived = True
         tally_sum._estimator = self.estimator
         tally_sum._num_realizations = self.num_realizations
+        tally_sum._num_particles = self.num_particles
         tally_sum._with_batch_statistics = self.with_batch_statistics
         tally_sum._with_summary = self.with_summary
         tally_sum._sp_filename = self._sp_filename
@@ -2885,6 +2910,7 @@ class Tally(IDManagerMixin):
         tally_avg._derived = True
         tally_avg._estimator = self.estimator
         tally_avg._num_realizations = self.num_realizations
+        tally_avg._num_particles = self.num_particles
         tally_avg._with_batch_statistics = self.with_batch_statistics
         tally_avg._with_summary = self.with_summary
         tally_avg._sp_filename = self._sp_filename
@@ -3304,7 +3330,6 @@ class Tallies(cv.CheckedList):
             Tallies object
 
         """
-        parser = ET.XMLParser(huge_tree=True)
-        tree = ET.parse(path, parser=parser)
+        tree = ET.parse(path)
         root = tree.getroot()
         return cls.from_xml_element(root)
