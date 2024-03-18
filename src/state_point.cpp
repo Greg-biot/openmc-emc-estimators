@@ -208,6 +208,7 @@ extern "C" int openmc_statepoint_write(const char* filename, bool* write_source)
         }
 
         write_dataset(tally_group, "n_realizations", tally->n_realizations_);
+        write_dataset(tally_group, "n_particles", tally->n_particles_);
 
         // Write the ID of each filter attached to this tally
         write_dataset(tally_group, "n_filters", tally->filters().size());
@@ -494,6 +495,7 @@ void load_state_point()
           read_tally_results(tally_group, results.shape()[0],
             results.shape()[1], results.data());
           read_dataset(tally_group, "n_realizations", tally->n_realizations_);
+          read_dataset(tally_group, "n_particles", tally->n_particles_);
           close_group(tally_group);
         }
       }
@@ -815,6 +817,7 @@ void write_unstructured_mesh_results()
       }
 
       int n_realizations = tally->n_realizations_;
+      int n_particles = tally->n_particles_;
 
       for (int score_idx = 0; score_idx < tally->scores_.size(); score_idx++) {
         for (int nuc_idx = 0; nuc_idx < tally->nuclides_.size(); nuc_idx++) {
@@ -938,7 +941,7 @@ void write_tally_results_nr(hid_t file_id)
         static_cast<int>(TallyResult::SUM_SQ) + 1));
 
     // Make copy of tally values in contiguous array
-    xt::xtensor<double, 3> values = values_view;
+    xt::xtensor<double, 4> values = values_view;
 
     if (mpi::master) {
       // Open group for tally
@@ -960,7 +963,7 @@ void write_tally_results_nr(hid_t file_id)
       }
 
       // Put in temporary tally result
-      xt::xtensor<double, 3> results_copy = xt::zeros_like(t->results_);
+      xt::xtensor<double, 4> results_copy = xt::zeros_like(t->results_);
       auto copy_view = xt::view(results_copy, xt::all(), xt::all(),
         xt::range(static_cast<int>(TallyResult::SUM),
           static_cast<int>(TallyResult::SUM_SQ) + 1));
