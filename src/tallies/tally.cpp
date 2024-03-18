@@ -760,7 +760,7 @@ void Tally::accumulate()
 #pragma omp parallel for
     for (int i = 0; i < results_.shape()[0]; ++i) {
       for (int j = 0; j < results_.shape()[1]; ++j) {
-        double val = results_(i, j, TallyResult::VALUE) * norm;
+        double val = results_(i, j, TallyResult::VALUE);
         results_(i, j, TallyResult::VALUE) = 0.0;
         results_(i, j, TallyResult::SUM) += val;
         results_(i, j, TallyResult::SUM_SQ) += val * val;
