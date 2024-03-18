@@ -740,6 +740,7 @@ void Tally::accumulate()
 {
   // Increment number of realizations
   n_realizations_ += settings::reduce_tallies ? 1 : mpi::n_procs;
+  n_particles_ = settings::n_particles;
 
   if (mpi::master || !settings::reduce_tallies) {
     // Calculate total source strength for normalization
