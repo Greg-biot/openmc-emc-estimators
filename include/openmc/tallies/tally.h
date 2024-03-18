@@ -149,6 +149,9 @@ public:
   //! Number of realizations
   int n_realizations_ {0};
 
+  //! Number of particles
+  int n_particles_ {0};
+
   vector<int> scores_; //!< Filter integrands (e.g. flux, fission)
 
   //! Index of each nuclide to be tallied.  -1 indicates total material.
