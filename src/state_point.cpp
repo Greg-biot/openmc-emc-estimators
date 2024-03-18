@@ -941,7 +941,7 @@ void write_tally_results_nr(hid_t file_id)
         static_cast<int>(TallyResult::SUM_SQ) + 1));
 
     // Make copy of tally values in contiguous array
-    xt::xtensor<double, 4> values = values_view;
+    xt::xtensor<double, 3> values = values_view;
 
     if (mpi::master) {
       // Open group for tally
@@ -963,7 +963,7 @@ void write_tally_results_nr(hid_t file_id)
       }
 
       // Put in temporary tally result
-      xt::xtensor<double, 4> results_copy = xt::zeros_like(t->results_);
+      xt::xtensor<double, 3> results_copy = xt::zeros_like(t->results_);
       auto copy_view = xt::view(results_copy, xt::all(), xt::all(),
         xt::range(static_cast<int>(TallyResult::SUM),
           static_cast<int>(TallyResult::SUM_SQ) + 1));
