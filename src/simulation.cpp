@@ -364,10 +364,10 @@ void initialize_batch()
 void finalize_batch()
 {
   // Reduce tallies onto master process and accumulate
-  simulation::time_tallies.start();
-  accumulate_tallies();
-  simulation::time_tallies.stop();
-
+  //simulation::time_tallies.start();
+  //accumulate_tallies();
+  //simulation::time_tallies.stop();
+  
   // update weight windows if needed
   for (const auto& wwg : variance_reduction::weight_windows_generators) {
     wwg->update();
@@ -756,6 +756,9 @@ void transport_history_based()
     Particle p;
     initialize_history(p, i_work);
     transport_history_based_single_particle(p);
+    simulation::time_tallies.start();
+    accumulate_tallies();
+    simulation::time_tallies.stop();
   }
 }
 
